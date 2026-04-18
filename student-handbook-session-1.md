@@ -68,14 +68,14 @@ Open your terminal, clone the Day 2 repo, and go inside it:
 
 ```bash
 cd ~/thecrux-bootcamp
-git clone https://github.com/thecrux-ai/ccfl-5-day-2
-cd ccfl-5-day-2
+git clone https://github.com/thecrux-ai/ccfl-6-day-2
+cd ccfl-6-day-2
 ```
 
 Copy your CLAUDE.md from Day 1 — it's the foundation for everything today:
 
 ```bash
-cp ~/thecrux-bootcamp/ccfl-5-day-1/CLAUDE.md .
+cp ~/thecrux-bootcamp/ccfl-6-day-1/CLAUDE.md .
 ```
 
 Start Claude:
