@@ -184,6 +184,14 @@ TELEGRAM_BOT_TOKEN=...
 TELEGRAM_USER_ID=...
 ```
 
+> ⚠️ **Security: read this before you commit anything.**
+>
+> These 4 keys live in `.env` only. Never paste them into `index.html`, a `.txt` file, a Markdown note, or anywhere Claude might inline them into frontend code. If Claude ever suggests hardcoding a key "just for testing", say no and ask it to use `process.env.KEY_NAME` instead.
+>
+> **Why it matters:** GitHub scans public repos for OpenRouter (`sk-or-`) and Resend (`re_`) keys within minutes of a push. Providers auto-revoke exposed keys, but in the meantime attackers can drain your credits before you notice.
+>
+> Belt and suspenders: we'll run a security audit before pushing (Step 4A), and we'll push as a **private** repo by default.
+
 > **All services are free tier.** Resend free tier: 100 emails/day, but only to your own email (see note above).
 
 ### 3D: Test Everything Locally (10 min)
@@ -260,15 +268,65 @@ _Break — 10 min_
 
 **What you're doing:** Everything works locally. Now put it on the internet — live URL, real visitors, real agent running 24/7.
 
-### 4A: Push to GitHub (5 min)
+### 4A: Security Audit + Push to GitHub (10 min)
+
+**First, initialize the repo and add `.gitignore`:**
 
 ```
 Run these commands: cd my-site && git init. Then create a .gitignore file with these exact entries: node_modules, .env, .vercel, server.js
 ```
 
-```bash
-gh repo create my-site --public --source=. --push
+**Now run a security audit before your code touches the internet.** Paste this prompt:
+
 ```
+Audit my my-site repo for leaked secrets before I push it to GitHub.
+
+IMPORTANT: this audit does NOT require reading .env. Work entirely
+from .gitignore, git state, and pattern matching. Do not request
+.env read access.
+
+1. Read .gitignore. Confirm it contains a line for .env (on its
+   own, not just as part of another pattern).
+
+2. Run: git ls-files | grep -E '^\.env$'
+   Expected: empty output. If .env shows up, it's tracked. Fix it:
+     git rm --cached .env
+     git commit -m "Stop tracking .env"
+
+3. Pattern-grep the repo for leaked secrets. Search index.html,
+   public/, api/, *.txt, *.md, and any stray backup or log files
+   (but exclude .env itself, node_modules, and .git):
+   - sk-or-                                    (OpenRouter key prefix)
+   - re_[A-Za-z0-9]{8,}                        (Resend key pattern)
+   - [0-9]{8,}:[A-Za-z0-9_-]{35}               (Telegram bot token)
+   - Any hardcoded assignment matching:
+     /[A-Z_]*(API_KEY|TOKEN|SECRET)\s*[:=]\s*['"][^'"${}]+['"]/ 
+     in .js, .html, or .md files — this catches patterns like
+     const KEY = "actualvalue" regardless of which key
+
+4. Confirm no process.env.* or raw secret reads happen in
+   client-side code. process.env.* should appear ONLY in api/*.js
+   (server-side), never in index.html or frontend scripts.
+
+Report either:
+  - "clean" plus a list of exactly what you checked, OR
+  - a list of violations with file path and line number.
+
+Fix any violations by moving the value to .env and replacing the
+hardcoded string with process.env.KEY_NAME (server-side only).
+```
+
+Wait for Claude to report "clean" before the next step. If it fixed anything, eyeball the diff yourself before continuing.
+
+> **Why pattern-based?** A secret audit shouldn't need to see the secret. If you denied Claude read access to `.env` (good instinct), this prompt still works — it hunts for key *shapes* like `sk-or-` and `re_`, which is enough to catch an accidental paste into `index.html` or a `.txt` file.
+
+**Push as a private repo:**
+
+```bash
+gh repo create my-site --private --source=. --push
+```
+
+> 🔒 **Private by default.** One leaked key during class is a worse failure mode than an extra click. You can flip the repo to public later once you've reviewed it: `gh repo edit --visibility public` (rerun the security audit first). Vercel deploys private repos identically, so nothing else changes.
 
 > **`gh` not found?** You skipped GitHub CLI in the pre-setup. Go to [thecrux.ai/setup](https://thecrux.ai/setup) and complete the GitHub CLI step, then come back and run this command.
 
@@ -292,6 +350,16 @@ Now add your environment variables. Go to your project → **Settings** → **En
 - `TELEGRAM_USER_ID`
 
 After adding the env vars, **redeploy**: go to **Deployments** → click the three dots on the latest deploy → **Redeploy**.
+
+**Make sure your site is actually public:**
+
+Two things trip people up when they try to share the URL:
+
+1. **Share the production URL, not a preview URL.** The short one at the top of your project page (e.g. `https://my-site.vercel.app`) is production and public. The long ones on the **Deployments** tab (e.g. `my-site-git-main-yourname.vercel.app`) are preview deployments and **require a Vercel login to view** by default. If you paste a preview URL in Telegram or LinkedIn, visitors hit a login wall.
+
+2. **If even your production URL asks visitors to log in, turn off Deployment Protection.** Go to **Project Settings** → **Deployment Protection** → set **Vercel Authentication** to **Disabled** → **Save**. Reload your production URL in an incognito window to confirm it loads without a login prompt.
+
+> **When would you leave Deployment Protection on?** For internal tools, staging environments, or client previews you don't want indexed or shared yet. For a public marketing site with a chatbot, you want it off.
 
 > **Not working?** Make sure `index.html` is in the root of the repo (not in a subfolder). If the page is blank, check the Vercel build logs for errors.
 
@@ -768,6 +836,7 @@ Things you can add after the bootcamp:
 - **Full autonomy:** If you set up approval mode, switch to `APPROVAL_MODE=false` once you trust the proposals
 - **Custom domain:** Point your own domain to the Vercel deployment
 - **Multiple proposal templates:** Different formats for different service lines
+- **Go public:** Want the repo in your portfolio or on LinkedIn? Rerun the security audit prompt from Step 4A, then `gh repo edit --visibility public`. Do the audit *before* flipping visibility, not after.
 
 ---
 
