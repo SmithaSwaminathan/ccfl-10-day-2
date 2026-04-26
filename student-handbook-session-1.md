@@ -163,7 +163,9 @@ sentences — what it looks like, what it feels like, and why it fits me.
 Don't build yet — just propose.
 ```
 
-Review the direction. Adjust if something feels off. Then:
+Review the direction. Adjust if something feels off. Then pick **one** of the two paths below to build.
+
+**Path A — Let the frontend-design skill drive the look.** Faster. Claude picks fonts, color, and rhythm based on its trained taste plus your CLAUDE.md. Good when you don't have a design system written down yet.
 
 ```
 Build it. Use [Copy A / Copy B / the best of both].
@@ -181,55 +183,73 @@ The site must be:
 Save as my-site/index.html with styles.css in the same directory.
 ```
 
+**Path B — Hand Claude a `design.md` and make it the source of truth.** Slower setup, much more consistent output. Good when you've already nailed an aesthetic and want every page to look like it came from the same studio. See `what-is-design-md.md` for the format.
+
+Before you run the prompt, create your own `design.md` in the project root. Use a tool like [getdesign.md](https://getdesign.md), [designmd.app](https://designmd.app/en/), or [designmd.ai](https://designmd.ai) — paste a URL whose look you want to copy (Vercel, Stripe, Linear, your favorite landing page) and it spits out a structured design.md you can paste in.
+
+Save as `design.md` in the project root, then run:
+
+```
+Build it. Use [Copy A / Copy B / the best of both].
+
+Use design.md as the production source of truth for every visual decision:
+fonts, color tokens, spacing scale, type scale, component specs, motion
+rules, and anti-defaults. If a value is not in design.md, pick from it or
+update design.md. Do not invent new tokens inline.
+
+The site must be:
+- Single page, responsive, mobile-friendly
+- HTML + CSS + JS, no framework
+- All CSS values map back to tokens in design.md
+- Include: hero, about, services, testimonials, CTA, contact form
+
+Save as my-site/index.html with styles.css in the same directory.
+```
+
 Open it in your browser: `open my-site/index.html`
 
 ### 1D: Logo Generation (15 min)
 
 ```
-Generate 2 SVG logo options for my brand:
-- Logo 1: A mark (icon) + wordmark — minimal, modern
-- Logo 2: A typographic logo — distinctive lettering, no icon
+Generate one SVG logo for my brand. Pick the form that fits my brand best
+(mark + wordmark, or typographic-only) and explain why in one line.
 
-Both should work on dark and light backgrounds.
+Must work on dark and light backgrounds.
 Use colors that match my final website design.
 
-Save as my-site/logo-v1.svg and my-site/logo-v2.svg.
+Save as my-site/logo.svg.
 
-Also create logos-showcase.html that displays both logos on white and dark
-backgrounds side by side for comparison.
+Also create logos-showcase.html that displays the logo on white and dark
+backgrounds side by side.
 ```
 
-Pick one and integrate it:
+Integrate it:
 
 ```
-Use logo [1/2]. Add it to the header of my-site/index.html as an inline SVG.
+Add my-site/logo.svg to the header of my-site/index.html as an inline SVG.
 Make sure the colors work with the rest of the design.
 ```
 
-### 1E: Expert Roast & Fix (40 min)
+### 1E: Expert Roast & Fix (30 min)
 
-Before shipping, get your site reviewed by a panel of experts. Claude assembles 5 specialists who each critique your site from their angle — then they discuss and produce a prioritized fix list.
+Before shipping, get your site reviewed by a panel of experts. Claude assembles 3 specialists who each critique your site from their angle — then they discuss and produce a prioritized fix list.
 
 ```
 I need you to review the website at my-site/index.html by assembling a
-5-person expert panel. Each expert reviews independently, then they
+3-person expert panel. Each expert reviews independently, then they
 discuss and produce a prioritized fix list.
 
 THE PANEL:
-1. **Shreya Iyer, Brand Strategist** — Is the copy distinctive? Does it
-   sound like a real person or like AI? Would she remember this site?
-2. **Marcus Tan, Product Designer** — Visual hierarchy, CTAs, whitespace,
+1. **Marcus Tan, Product Designer** — Visual hierarchy, CTAs, whitespace,
    mobile responsiveness, load time. What's broken?
-3. **Ankit Verma, Growth Marketer** — 5-second test: do I understand the
+2. **Ankit Verma, Growth Marketer** — 5-second test: do I understand the
    value prop? Would I convert? Where do visitors drop off?
-4. **Meera Nambiar, Target Customer** — She's the exact person this site
+3. **Meera Nambiar, Target Customer** — She's the exact person this site
    is for. Is she convinced? What questions does she still have?
-5. **Rahul Khanna, Angel Investor** — Positioning credibility. Does this
-   look like someone worth betting on? Or is it generic?
 
 INSTRUCTIONS:
 1. Each expert writes their review independently to roast/[name]-review.md
-2. After all 5, they discuss — create roast/panel-discussion.md
+2. After all 3, they discuss — create roast/panel-discussion.md
 3. Produce roast/fix-list.md with issues ranked:
    - P0: Launch blockers (fix before deploying)
    - P1: Important (fix soon)
@@ -237,6 +257,8 @@ INSTRUCTIONS:
 
 Go. Be harsh. I'd rather fix real problems now.
 ```
+
+> **Three is the floor, not the ceiling.** The panel is a pattern, not a fixed cast. Add a Brand Strategist if you're worried the copy reads like AI. Add an Angel Investor if positioning credibility is the bet. Add an Accessibility Auditor, an SEO specialist, a Legal/Compliance reviewer, a competing founder — anyone whose lens would catch something the three above would miss. Each new expert is one more `roast/[name]-review.md` file and one more voice in the discussion. Pick experts whose disagreement with each other will surface the real issues.
 
 Apply the fixes:
 
@@ -251,7 +273,7 @@ Then apply the top 3 P1 fixes. Stop there — we're shipping.
 - [ ] Website built at `my-site/index.html` — responsive, professional
 - [ ] Reviewed and refined — it looks like a real site
 - [ ] Logo generated and integrated into the header
-- [ ] Expert roast completed — 5 reviewers, prioritized fix list
+- [ ] Expert roast completed — 3+ reviewers, prioritized fix list
 - [ ] P0 and top P1 fixes applied
 - [ ] Open `my-site/index.html` — you'd show this to a client
 
