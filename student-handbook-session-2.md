@@ -270,15 +270,13 @@ _Break — 10 min_
 
 ### 4A: Security Audit + Push to GitHub (10 min)
 
-> **Where to run each block:** This step has two kinds of blocks. Plain blocks are **prompts** — paste them into Claude. ` ```bash ` blocks are **shell commands** — run them in your terminal. Each block below is labeled.
-
-**First, initialize the repo and add `.gitignore`. Paste this into Claude:**
+**First, initialize the repo and add `.gitignore`:**
 
 ```
-Run these commands: cd my-site && git init. Then create a .gitignore file with these exact entries (one per line): node_modules, .env, .vercel, server.js
+Run these commands: cd my-site && git init. Then create a .gitignore file with these exact entries: node_modules, .env, .vercel, server.js
 ```
 
-**Now run a security audit before your code touches the internet. Paste this into Claude:**
+**Now run a security audit before your code touches the internet.** Paste this prompt:
 
 ```
 Audit my my-site repo for leaked secrets before I push it to GitHub.
@@ -322,7 +320,7 @@ Wait for Claude to report "clean" before the next step. If it fixed anything, ey
 
 > **Why pattern-based?** A secret audit shouldn't need to see the secret. If you denied Claude read access to `.env` (good instinct), this prompt still works — it hunts for key *shapes* like `sk-or-` and `re_`, which is enough to catch an accidental paste into `index.html` or a `.txt` file.
 
-**Commit and push as a private repo. Run these in your terminal:**
+**Commit and push as a private repo:**
 
 ```bash
 git add -A
