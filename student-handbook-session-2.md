@@ -320,11 +320,15 @@ Wait for Claude to report "clean" before the next step. If it fixed anything, ey
 
 > **Why pattern-based?** A secret audit shouldn't need to see the secret. If you denied Claude read access to `.env` (good instinct), this prompt still works — it hunts for key *shapes* like `sk-or-` and `re_`, which is enough to catch an accidental paste into `index.html` or a `.txt` file.
 
-**Push as a private repo:**
+**Commit and push as a private repo:**
 
 ```bash
+git add -A
+git commit -m "Initial commit: my-site"
 gh repo create my-site --private --source=. --push
 ```
+
+> **Why the explicit `git add` + `git commit`?** `gh repo create --push` refuses to run with `--push enabled but no commits found` if your repo has no commits yet. Staging and committing first guarantees the push works on the first try.
 
 > 🔒 **Private by default.** One leaked key during class is a worse failure mode than an extra click. You can flip the repo to public later once you've reviewed it: `gh repo edit --visibility public` (rerun the security audit first). Vercel deploys private repos identically, so nothing else changes.
 
