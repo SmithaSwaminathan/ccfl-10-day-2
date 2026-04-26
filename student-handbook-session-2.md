@@ -270,7 +270,7 @@ _Break — 10 min_
 
 ### 4A: Security Audit + Push to GitHub (10 min)
 
-> **All three blocks below are Claude prompts.** By now you know the drill — paste each one into Claude and let it run the commands. If a `gh` or `git` command fails, Claude will see the error and fix it.
+> **Where to run each block:** This step has two kinds of blocks. Plain blocks are **prompts** — paste them into Claude. ` ```bash ` blocks are **shell commands** — run them in your terminal. Each block below is labeled.
 
 **First, initialize the repo and add `.gitignore`. Paste this into Claude:**
 
@@ -322,19 +322,15 @@ Wait for Claude to report "clean" before the next step. If it fixed anything, ey
 
 > **Why pattern-based?** A secret audit shouldn't need to see the secret. If you denied Claude read access to `.env` (good instinct), this prompt still works — it hunts for key *shapes* like `sk-or-` and `re_`, which is enough to catch an accidental paste into `index.html` or a `.txt` file.
 
-**Commit and push as a private repo. Paste this into Claude:**
+**Commit and push as a private repo. Run these in your terminal:**
 
-```
-Stage everything, commit it, and push to a new private GitHub repo. Run these three commands in order:
-
+```bash
 git add -A
 git commit -m "Initial commit: my-site"
 gh repo create my-site --private --source=. --push
-
-Don't skip the commit — `gh repo create --push` refuses to run with "--push enabled but no commits found" if the repo has no commits yet.
 ```
 
-> **`gh` not authenticated?** If `gh repo create` complains about auth, open your own terminal and run `gh auth login` once (it opens a browser). Then come back and re-paste the prompt above — Claude will retry.
+> **Why the explicit `git add` + `git commit`?** `gh repo create --push` refuses to run with `--push enabled but no commits found` if your repo has no commits yet. Staging and committing first guarantees the push works on the first try.
 
 > 🔒 **Private by default.** One leaked key during class is a worse failure mode than an extra click. You can flip the repo to public later once you've reviewed it: `gh repo edit --visibility public` (rerun the security audit first). Vercel deploys private repos identically, so nothing else changes.
 
