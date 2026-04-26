@@ -510,33 +510,29 @@ CREATE POLICY "Allow anonymous reads" ON leads
 
 6. **Verify:** Go to **Table Editor** (left sidebar) → you should see a **leads** table. It'll be empty — that's correct.
 
-**Add the `store_lead` tool to your agent:**
+**Activate the `store_lead` tool:**
+
+Your `api/generate-proposal.js` already includes a `store_lead` tool. It's dormant until Supabase env vars are present, at which point the agent picks it up automatically. Open the file and find the `STORE_LEAD_TOOL` definition (around line 84) so you can see what's about to wake up:
 
 ```
-Add a 4th tool to the agent in api/generate-proposal.js:
-
-store_lead:
-- Claude passes: name, company, email, industry, challenge, budget,
-  score (HIGH/MEDIUM/LOW), status
-- Your code stores in Supabase leads table via REST API
-- Claude scores the lead itself using the triage rules in the
-  system prompt — no regex needed
-
-Use the Supabase REST API:
-POST to ${SUPABASE_URL}/rest/v1/leads
-Header: apikey set to SUPABASE_KEY
-Content-Type: application/json
+Read api/generate-proposal.js. Find the STORE_LEAD_TOOL definition
+and the spot where it gets added to the tools list only when
+SUPABASE_URL and SUPABASE_KEY are set. Explain in 3 lines what
+will change once I set those env vars.
 ```
+
+> **Why it's pre-wired:** This is a feature flag pattern. The same shape shows up in the next Power Up (`APPROVAL_MODE=true`). Code ships dormant, env vars decide whether it runs. Lets you ship safely and turn things on per environment.
 
 Add `SUPABASE_URL` and `SUPABASE_KEY` to your Vercel env vars too, then redeploy.
 
-Test it: trigger the full agent loop again. Check Supabase → **Table Editor** → **leads** — you should see the lead with its score.
+Test it: trigger the full agent loop again. Check Supabase → **Table Editor** → **leads**, you should see the lead with its score.
 
 > **Supabase free tier** gives 500 MB database + 1 GB file storage. More than enough for your AI sales agent.
 
 **Checkpoint:**
 - [ ] Supabase project created with leads table
-- [ ] `store_lead` tool added to agent
+- [ ] `SUPABASE_URL` and `SUPABASE_KEY` set in `.env` and Vercel, redeployed
+- [ ] Agent log shows "Supabase enabled" on next run
 - [ ] Leads appear in Supabase Table Editor with scores
 
 ---
