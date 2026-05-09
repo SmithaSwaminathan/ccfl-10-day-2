@@ -1,6 +1,6 @@
 # Day 2: Your Team's First Project — Ship Your AI Sales Engine
 
-**Duration:** Full day (10:00 AM – 5:00 PM IST) | **Four core steps, one live URL with an AI agent by 4:00 PM IST — then power it up**
+**Duration:** Full day (9:00 AM – 4:00 PM EST) | **Four core steps, one live URL with an AI agent by 3:00 PM EST — then power it up**
 
 This handbook is split into two sessions. Open one at a time — that's the whole point. Every prompt you need lives inside the session files below.
 
@@ -28,7 +28,7 @@ By the end of today, you'll have:
 | -------------- | ----------------------------------------------------------------------------------------------- |
 | **Pre-Lunch**  | [Session 1: Brand, Design & The Chatbot](student-handbook-session-1.md)                         |
 |                | Steps 1–2: brief → copy → design → logo → roast → chatbot live locally                          |
-| **Lunch**      | *1:30–2:15 PM IST*                                                                              |
+| **Lunch**      | *12:30–1:15 PM EST*                                                                              |
 | **Post-Lunch** | [Session 2: Proposal Engine & Deploy](student-handbook-session-2.md)                            |
 |                | Steps 3–4: agentic proposal engine → deploy to Vercel → Power Ups → Show & Tell → Close         |
 
@@ -45,7 +45,7 @@ By the end of today, you'll have:
 
 ## Schedule
 
-**10:00 AM – 5:00 PM IST**
+**9:00 AM – 4:00 PM EST**
 
 |                | What                       | What's Happening                                                      |
 | -------------- | -------------------------- | --------------------------------------------------------------------- |
@@ -53,7 +53,7 @@ By the end of today, you'll have:
 |                | Kickoff                    | Recap, verify, set the stage                                          |
 |                | **Step 1: Brand & Design** | Brief → 2 copy variations → design → review → logo → expert roast     |
 |                | **Step 2: The Chatbot**    | Chat widget + Claude API + voice fingerprint → test locally           |
-| **Lunch**      | *1:30–2:15 PM IST*         |                                                                       |
+| **Lunch**      | *12:30–1:15 PM EST*         |                                                                       |
 | **Post-Lunch** |                            |                                                                       |
 |                | **Step 3: Proposal Engine**| Agentic tool use → PDF → email → lead alert → test locally            |
 |                | **Step 4: Deploy & Demo**  | Push to GitHub → deploy to Vercel → add env vars → debug → live demo  |

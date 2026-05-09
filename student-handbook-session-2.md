@@ -1,6 +1,6 @@
 # Day 2 — Session 2: Proposal Engine & Deploy
 
-**Duration:** Post-Lunch (2:15 PM – 5:00 PM IST) | **You end this session with a live URL on the internet, agent running 24/7**
+**Duration:** Post-Lunch (1:15 PM – 4:00 PM EST) | **You end this session with a live URL on the internet, agent running 24/7**
 
 > **Coming back from lunch?** Run `/compact` first. The proposal engine is the most complex step — Claude needs a clean context window to generate and customize the code correctly.
 
@@ -414,7 +414,7 @@ Now every `git push` automatically updates your live site. The agent runs 24/7 w
 
 ---
 
-## Power Ups (4:00–4:30 PM IST)
+## Power Ups (3:00–3:30 PM EST)
 
 Your site is live. Your agent is running. Everything below is optional — pick whatever interests you, in any order.
 
@@ -731,7 +731,7 @@ Don't forget to add `APPROVAL_MODE=true` and `OWNER_EMAIL` to your Vercel Enviro
 
 ---
 
-## Show & Tell (4:30–4:55 PM IST)
+## Show & Tell (3:30–3:55 PM EST)
 
 **3 minutes per person.** Share your screen. Show the live URL. This is a demo, not a lecture.
 

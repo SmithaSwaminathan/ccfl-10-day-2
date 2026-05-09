@@ -1,6 +1,6 @@
 # Day 2 — Session 1: Brand, Design & The Chatbot
 
-**Duration:** Pre-Lunch (10:00 AM – 1:30 PM IST) | **You end this session with a chatbot answering in your voice, running locally**
+**Duration:** Pre-Lunch (9:00 AM – 12:30 PM EST) | **You end this session with a chatbot answering in your voice, running locally**
 
 ---
 
@@ -68,14 +68,14 @@ Open your terminal, clone the Day 2 repo, and go inside it:
 
 ```bash
 cd ~/thecrux-bootcamp
-git clone https://github.com/thecrux-ai/ccfl-8-day-2
-cd ccfl-8-day-2
+git clone https://github.com/thecrux-ai/cclf-9-day-2
+cd cclf-9-day-2
 ```
 
 Copy your CLAUDE.md from Day 1 — it's the foundation for everything today:
 
 ```bash
-cp ~/thecrux-bootcamp/ccfl-8-day-1/CLAUDE.md .
+cp ~/thecrux-bootcamp/cclf-9-day-1/CLAUDE.md .
 ```
 
 Start Claude:
@@ -88,7 +88,7 @@ claude
 
 ---
 
-## Kickoff (10:00–10:15 AM IST)
+## Kickoff (9:00–9:15 AM EST)
 
 Yesterday you built your CLAUDE.md — your identity, voice, services, and connected it all to your phone. Today you put it to work on a real project.
 
@@ -402,6 +402,6 @@ Ask a friend or neighbor to chat with your bot at `http://localhost:3000`. Do th
 
 ---
 
-_Lunch — 1:30–2:15 PM IST_
+_Lunch — 12:30–1:15 PM EST_
 
 After lunch, open [Session 2: Proposal Engine & Deploy](student-handbook-session-2.md) — Steps 3 and 4, plus Power Ups, Show & Tell, and the close.
