@@ -160,7 +160,7 @@ Two services need API keys. Add them to your `.env` file in `my-site/`.
 **Resend (email sending):**
 
 1. Go to [resend.com](https://resend.com) → sign up → create API key
-2. Add to your `.env` file: `RESEND_API_KEY=re_your_key_here`
+2. Open your `.env` file in a text editor and paste: `RESEND_API_KEY=re_your_key_here`
 
 > ⚠️ **Resend free tier limitation — read this now, not later.**
 >
@@ -173,7 +173,7 @@ Two services need API keys. Add them to your `.env` file in `my-site/`.
 **Telegram alerts (reuse Day 1 bot):**
 
 - You already have `TELEGRAM_BOT_TOKEN` and `TELEGRAM_USER_ID` from yesterday
-- Add both to your `.env` file
+- Open your `.env` file and paste both
 
 Your `.env` file should now have all 4 keys:
 
@@ -504,7 +504,7 @@ CREATE POLICY "Allow anonymous reads" ON leads
 
    - Click **Run** (or Cmd+Enter). You should see "Success. No rows returned" — that means it worked.
 
-5. Add to your `.env` file:
+5. Open your `.env` file and paste:
    - `SUPABASE_URL=https://your-project.supabase.co`
    - `SUPABASE_KEY=sb_publishable_your-key-here`
 

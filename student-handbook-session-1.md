@@ -297,10 +297,15 @@ Your chatbot needs an API key to call an LLM. We'll use **OpenRouter** — it gi
 
 **You've been given a pre-loaded OpenRouter API key** — check the chat or the link shared by your instructor. It has credits loaded for the bootcamp.
 
-Tell Claude:
+In your terminal, create the file:
+
+```bash
+touch my-site/.env
+```
+
+Open `my-site/.env` in a text editor and paste your key:
 
 ```
-Create a .env file in my-site/ directory with this key:
 OPENROUTER_API_KEY=<paste your key here>
 ```
 
