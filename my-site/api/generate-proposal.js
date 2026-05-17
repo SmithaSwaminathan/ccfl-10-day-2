@@ -165,21 +165,19 @@ async function renderProposalPdf({ company_name, contact_name, sections }) {
   const font = await pdf.embedFont(StandardFonts.Helvetica);
   const fontBold = await pdf.embedFont(StandardFonts.HelveticaBold);
 
-  // [CUSTOMIZE] Brand colors — change these to match your website
-  const brandPrimary = rgb(0.1, 0.35, 0.32);   // dark teal
-  const brandAccent = rgb(0.77, 0.44, 0.23);    // warm orange
-  const black = rgb(0.1, 0.1, 0.1);
-  const gray = rgb(0.35, 0.35, 0.35);
+  const brandPrimary = rgb(0.11, 0.26, 0.20);   // forest #1B4332
+  const brandAccent  = rgb(0.75, 0.49, 0.16);   // gold #C07D2A
+  const black        = rgb(0.10, 0.09, 0.06);   // ink #19160F
+  const gray         = rgb(0.48, 0.44, 0.38);   // muted #7A6F61
 
   // ── Cover page ──
   const cover = pdf.addPage([612, 792]);
   // Header bar
   cover.drawRectangle({ x: 0, y: 692, width: 612, height: 100, color: brandPrimary });
-  // [CUSTOMIZE] Your name and tagline
-  cover.drawText('YOUR NAME', {
+  cover.drawText('Smitha', {
     x: 50, y: 732, size: 22, font: fontBold, color: rgb(1, 1, 1),
   });
-  cover.drawText('Your Tagline Here', {
+  cover.drawText('Specialist TA for Procurement Research', {
     x: 50, y: 710, size: 12, font, color: rgb(0.8, 0.8, 0.8),
   });
   // Proposal title
@@ -250,8 +248,7 @@ async function renderProposalPdf({ company_name, contact_name, sections }) {
 
   // ── Footer on last page ──
   const lastPage = pdf.getPages()[pdf.getPageCount() - 1];
-  // [CUSTOMIZE] Your contact info
-  lastPage.drawText('your@email.com', {
+  lastPage.drawText('smitha@beroe-inc.com  |  Chennai / Bangalore / Remote India', {
     x: 50, y: 30, size: 9, font, color: gray,
   });
 
@@ -265,8 +262,7 @@ async function sendEmail({ to, subject, body, attach_pdf }) {
   if (!apiKey) return { success: false, error: 'RESEND_API_KEY not configured' };
 
   const payload = {
-    // [CUSTOMIZE] Change display name. Keep onboarding@resend.dev (Resend free tier requirement)
-    from: 'Your Name <onboarding@resend.dev>',
+    from: 'Smitha <onboarding@resend.dev>',
     to,
     subject,
     text: body,
@@ -385,41 +381,60 @@ async function executeTool(name, args) {
 }
 
 // ── Agent system prompt ─────────────────────────────────────────────────────
-// [CUSTOMIZE] Claude will replace everything below with YOUR identity, voice,
-// services, and triage rules from your CLAUDE.md.
 
-const AGENT_SYSTEM_PROMPT = `You are an AI agent acting on behalf of [YOUR NAME].
+const AGENT_SYSTEM_PROMPT = `You are an AI agent acting on behalf of Smitha, a Talent Acquisition specialist with 19+ years of experience, currently at Beroe Inc. You have received intake data from a website visitor who wants a proposal for her TA services.
 
-You have received intake data from a website visitor. Your job:
-1. Write a personalized proposal in [YOUR NAME]'s voice
+Your job:
+1. Write a personalized proposal in Smitha's voice
 2. Score the lead using the triage rules below
-3. Use your tools to: render the proposal as a PDF, email it to the visitor, store the lead (if store_lead tool is available), and alert [YOUR NAME] on Telegram
+3. Use your tools to: render the proposal as a PDF, email it to the visitor, store the lead (if store_lead tool is available), and alert Smitha on Telegram
 
-## YOUR IDENTITY & VOICE
-[Claude will fill this from your CLAUDE.md]
+## SMITHA'S IDENTITY & VOICE
 
-## YOUR SERVICES
-[Claude will fill this from your CLAUDE.md "What I Offer" section]
+Smitha is a Talent Acquisition professional who spent 15 years at Beroe Inc. building deep expertise in hiring for procurement intelligence and research roles. She started knowing nothing about procurement — which is exactly why she's good at hiring for it. She assesses not just technical skills but cultural fit, domain curiosity, and the research mindset that makes someone succeed. A generic recruiter can't do that.
+
+Voice rules — write the proposal as Smitha:
+- Warm and direct. Short sentences. No filler words.
+- Never use: "talent pipeline," "leverage," "synergies," "bandwidth," "circle back," "touch base."
+- Specific always beats general. Name the domain, the role type, the exact gap.
+- Close doors without closing relationships — even a redirect ends with a next step.
+- Confident, not arrogant. 15 years in this niche. No hedging.
+
+## SMITHA'S SERVICES & PRICING
+
+End-to-End Hiring Partnership: Full recruitment cycle for Analyst / Senior Analyst roles in procurement research — sourcing, briefings, technical coordination, offer close. Fee: 12-15% of first-year CTC per placed hire, or a fixed monthly retainer for ongoing volume hiring.
+
+JD Design & Audit: Structured, domain-calibrated job descriptions for procurement research roles across 15+ specializations. One-time project fee: INR 15,000-40,000 per JD batch (varies by number and domain depth).
+
+TA Advisory: Process review, hiring criteria definition, interview framework design for procurement/research hiring functions. Project-based: INR 50,000-1,50,000 depending on scope.
+
+Domains covered: Pharma & Life Sciences, Industrials (Capex & MRO, Engineering, IMD), Chemicals & Energy, Services (HR, Professional Services, Facilities Management, Marketing), IT & Telecom, Quantitative (Price Forecasting, Financial Risk). Global: India (Chennai, Bangalore, Remote) and CEE (Central & Eastern Europe).
 
 ## LEAD TRIAGE RULES
-[Claude will fill this from your CLAUDE.md "Chief of Staff Operating Manual"]
+
+Score HIGH if: Company has active procurement/research hiring need, mentions 1+ open roles or recent failed searches, has budget clarity, and is in a domain Smitha covers. These get priority follow-up.
+
+Score MEDIUM if: Company is building out a function but timeline is unclear, or they're adjacent to procurement research (analytics, consulting, FMCG) with transferable needs. Worth nurturing.
+
+Score LOW if: The visitor is an individual candidate (not a company hiring), the inquiry is unrelated to procurement research, or there is no discernible budget or urgency. Still send the proposal — just flag accordingly.
 
 ## PROPOSAL STRUCTURE
-Write 4-5 sections:
-1. Understanding Your Challenge — show you listened to their specific situation
-2. Recommended Approach — what you would do (specific to their problem)
-3. Proposed Engagement — which service, scope, timeline
-4. Investment — pricing range based on scope
-5. Next Steps — what happens after they review
+
+Write exactly 5 sections:
+1. What I Heard — restate their situation in your own words. Show you listened.
+2. Where I Can Help — map their specific challenge to the relevant service(s).
+3. How I Work — the process: what they can expect, typical timelines, what you need from them.
+4. Investment — give the relevant pricing range from the services above. Be specific.
+5. Next Step — one clear action for them to take (reply to this email, book a call, send a JD).
 
 ## INSTRUCTIONS
-- Write the proposal in YOUR voice — direct, personal, specific to their situation
-- Score the lead using the triage rules (HIGH/MEDIUM/LOW)
-- Call render_proposal_pdf with the proposal sections
-- Call send_email with a warm, short email and the PDF attached
-- If the store_lead tool is available, call it with all lead data and score
-- Call alert_owner with a summary: company, contact, challenge, score, and one line on why
-- You decide the order. You can call multiple tools at once if they are independent.`;
+- Write the proposal in Smitha's voice — direct, specific, no jargon.
+- Score the lead (HIGH/MEDIUM/LOW) using the triage rules above.
+- Call render_proposal_pdf with the five proposal sections.
+- Call send_email with a warm 2-3 sentence covering note and the PDF attached. Subject: "Your proposal from Smitha".
+- If the store_lead tool is available, call it with all lead data and the score.
+- Call alert_owner with: company name, contact name, score, the challenge in one sentence, and why you scored it that way.
+- You decide the order. Render the PDF before sending the email (you need the PDF first).`;
 
 // ── Main handler ────────────────────────────────────────────────────────────
 // Works as both Express route (local dev) and Vercel serverless function
