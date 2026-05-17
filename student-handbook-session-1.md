@@ -75,7 +75,7 @@ cd ccfl-10-day-2
 Copy your CLAUDE.md from Day 1 — it's the foundation for everything today:
 
 ```bash
-cp ~/thecrux-bootcamp/ccfl-9-day-1/CLAUDE.md .
+cp ~/thecrux-bootcamp/ccfl-10-day-1/CLAUDE.md .
 ```
 
 Start Claude:
