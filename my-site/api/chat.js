@@ -76,6 +76,27 @@ module.exports = async (req, res) => {
     return res.json({ reply: "I'm not fully set up yet. Reach out to smitha@beroe-inc.com directly in the meantime." });
   }
 
+  // For intake mode, inject the exact current step so the model asks only one question
+  const INTAKE_QUESTIONS = [
+    null,
+    "What does their company do — industry, rough size, and stage?",
+    "What's the main hiring challenge they're facing right now?",
+    "What have they tried so far?",
+    "What would success look like if the hiring problem was solved?",
+    "What's the rough budget range?",
+    "What's their email address? (Tell them you'll send the proposal there.)",
+  ];
+
+  let systemPrompt = SYSTEM_PROMPT;
+  const isIntake = apiMessages.length > 0 && apiMessages[0].content === "I'd like to get a proposal.";
+  if (isIntake) {
+    const userTurns = apiMessages.filter(m => m.role === 'user').length;
+    const step = Math.min(userTurns, 6);
+    if (step <= 6 && INTAKE_QUESTIONS[step]) {
+      systemPrompt += `\n\nCURRENT STEP: ${step}. Your ONLY job this turn: acknowledge the previous answer briefly (1 sentence max), then ask EXACTLY this question and nothing else: "${INTAKE_QUESTIONS[step]}" — then stop. Add <INTAKE_STEP>${step}</INTAKE_STEP> at the end.`;
+    }
+  }
+
   try {
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
@@ -89,7 +110,7 @@ module.exports = async (req, res) => {
         model: 'openai/gpt-oss-120b:free',
         max_tokens: 400,
         messages: [
-          { role: 'system', content: SYSTEM_PROMPT },
+          { role: 'system', content: systemPrompt },
           ...apiMessages,
         ],
       }),
