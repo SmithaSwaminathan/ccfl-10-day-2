@@ -83,7 +83,7 @@ module.exports = async (req, res) => {
       },
       body: JSON.stringify({
         model: 'anthropic/claude-sonnet-4-6',
-        max_tokens: 200,
+        max_tokens: 150,
         messages: [
           { role: 'system', content: SYSTEM_PROMPT },
           ...apiMessages,
