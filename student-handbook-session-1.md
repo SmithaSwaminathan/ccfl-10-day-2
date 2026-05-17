@@ -327,7 +327,7 @@ ARCHITECTURE (API key safety):
 - Create api/chat.js — a serverless function (runs server-side)
 - The function calls OpenRouter's API (https://openrouter.ai/api/v1/chat/completions)
 - It reads OPENROUTER_API_KEY from process.env
-- Use model "anthropic/claude-sonnet-4.6" (or any model available on OpenRouter)
+- Use model "anthropic/claude-sonnet-4-6" (or any model available on OpenRouter)
 - Frontend calls /api/chat — the API key NEVER appears in client-side code
 
 SYSTEM PROMPT:
