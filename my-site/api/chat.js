@@ -82,8 +82,8 @@ module.exports = async (req, res) => {
         'X-Title': "Smitha's TA Portfolio",
       },
       body: JSON.stringify({
-        model: 'anthropic/claude-sonnet-4-6',
-        max_tokens: 150,
+        model: 'openai/gpt-oss-120b:free',
+        max_tokens: 400,
         messages: [
           { role: 'system', content: SYSTEM_PROMPT },
           ...apiMessages,
