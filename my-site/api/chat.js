@@ -51,39 +51,25 @@ Final (valid email): <INTAKE_COMPLETE>{JSON}</INTAKE_COMPLETE> — no INTAKE_STE
 
 Place marker on its own line at the very end. In normal Q&A mode, never include INTAKE markers.`;
 
-exports.handler = async (event) => {
-  if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: 'Method Not Allowed' };
+module.exports = async (req, res) => {
+  if (req.method !== 'POST') {
+    return res.status(405).send('Method Not Allowed');
   }
 
-  let body;
-  try {
-    body = JSON.parse(event.body || '{}');
-  } catch {
-    return { statusCode: 400, body: JSON.stringify({ error: 'Invalid JSON' }) };
-  }
+  const { message, messages } = req.body || {};
 
-  const { message, messages } = body;
-
-  // Build the messages array for the API call
   let apiMessages;
   if (messages && Array.isArray(messages) && messages.length > 0) {
-    // Intake mode: full conversation history provided
     apiMessages = messages;
   } else if (message && message.trim()) {
-    // Q&A mode: single message
     apiMessages = [{ role: 'user', content: message.trim() }];
   } else {
-    return { statusCode: 400, body: JSON.stringify({ error: 'No message provided' }) };
+    return res.status(400).json({ error: 'No message provided' });
   }
 
   const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) {
-    return {
-      statusCode: 200,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ reply: "I'm not fully set up yet. Reach out to smitha@beroe-inc.com directly in the meantime." }),
-    };
+    return res.json({ reply: "I'm not fully set up yet. Reach out to smitha@beroe-inc.com directly in the meantime." });
   }
 
   try {
@@ -92,7 +78,7 @@ exports.handler = async (event) => {
       headers: {
         'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
-        'HTTP-Referer': 'https://smithatahiring.netlify.app',
+        'HTTP-Referer': 'https://my-site-pink-mu.vercel.app',
         'X-Title': "Smitha's TA Portfolio",
       },
       body: JSON.stringify({
@@ -108,15 +94,10 @@ exports.handler = async (event) => {
     const data = await response.json();
     if (data.error) {
       console.error('[chat] OpenRouter error:', JSON.stringify(data.error));
-      return {
-        statusCode: 200,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reply: 'Something went wrong on my end. Please reach out to smitha@beroe-inc.com directly.' }),
-      };
+      return res.json({ reply: 'Something went wrong on my end. Please reach out to smitha@beroe-inc.com directly.' });
     }
     let replyText = data?.choices?.[0]?.message?.content?.trim() || '';
 
-    // Parse intake step marker
     let intake_step = null;
     const stepMatch = replyText.match(/<INTAKE_STEP>(\d+)<\/INTAKE_STEP>/);
     if (stepMatch) {
@@ -124,7 +105,6 @@ exports.handler = async (event) => {
       replyText = replyText.replace(/<INTAKE_STEP>\d+<\/INTAKE_STEP>/g, '').trim();
     }
 
-    // Parse intake complete marker
     let complete = false;
     let intake_data = null;
     const completeMatch = replyText.match(/<INTAKE_COMPLETE>([\s\S]*?)<\/INTAKE_COMPLETE>/);
@@ -140,16 +120,8 @@ exports.handler = async (event) => {
     if (intake_step !== null) responseBody.intake_step = intake_step;
     if (complete) { responseBody.complete = true; responseBody.intake_data = intake_data; }
 
-    return {
-      statusCode: 200,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(responseBody),
-    };
+    return res.json(responseBody);
   } catch (err) {
-    return {
-      statusCode: 200,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ reply: 'Something went wrong on my end. Please reach out to smitha@beroe-inc.com directly.' }),
-    };
+    return res.json({ reply: 'Something went wrong on my end. Please reach out to smitha@beroe-inc.com directly.' });
   }
 };

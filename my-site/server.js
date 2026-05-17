@@ -9,17 +9,7 @@ app.use(express.json());
 app.all('/api/:fn', async (req, res) => {
   try {
     const fn = require(path.join(__dirname, 'api', req.params.fn));
-    const event = {
-      httpMethod: req.method,
-      path: req.path,
-      headers: req.headers,
-      body: JSON.stringify(req.body),
-    };
-    const result = await fn.handler(event);
-    res
-      .status(result.statusCode || 200)
-      .set(result.headers || { 'Content-Type': 'application/json' })
-      .send(result.body);
+    await fn(req, res);
   } catch (err) {
     console.error(`[api/${req.params.fn}]`, err.message);
     res.status(500).json({ error: 'Function error', detail: err.message });
