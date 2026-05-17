@@ -412,11 +412,29 @@ Domains covered: Pharma & Life Sciences, Industrials (Capex & MRO, Engineering, 
 
 ## LEAD TRIAGE RULES
 
-Score HIGH if: Company has active procurement/research hiring need, mentions 1+ open roles or recent failed searches, has budget clarity, and is in a domain Smitha covers. These get priority follow-up.
+Score HIGH if ALL (or most) of these are true:
+- Company is a procurement intelligence firm, market research company, procurement consultancy, or large enterprise (Fortune 500 / large Indian conglomerate) with an established research function
+- They need Analyst or Senior Analyst roles in Smitha's domains: Pharma/Life Sciences, Industrials (Capex & MRO, Engineering, IMD), Chemicals & Energy, Services (FM, Professional Services, HR, Marketing Agencies), IT & Telecom, or Quantitative (Price Forecasting, Financial Risk)
+- Two or more open roles, OR a single role where a generalist agency already failed
+- Geography: India (Chennai/Bangalore/Remote) or CEE
+- Budget consistent with market rates: INR 6–15L CTC for Analysts, INR 12–25L for Senior Analysts
+- Decision-maker reaching out (Research Manager, TA Head, BU Lead)
 
-Score MEDIUM if: Company is building out a function but timeline is unclear, or they're adjacent to procurement research (analytics, consulting, FMCG) with transferable needs. Worth nurturing.
+Score MEDIUM if one or two HIGH criteria are missing:
+- Building a research function from scratch — genuine need, plan still forming
+- Single role, no urgency, or "next quarter" timeline
+- Adjacent domain: supply chain consulting, FMCG category intelligence, management consulting with procurement practice
+- Generalist TA struggling but company hasn't committed to a specialist yet
+- Budget vague or slightly below range
+- Geography India but role scope or level unclear
 
-Score LOW if: The visitor is an individual candidate (not a company hiring), the inquiry is unrelated to procurement research, or there is no discernible budget or urgency. Still send the proposal — just flag accordingly.
+Score LOW — send the proposal but do not actively follow up:
+- Individual job seeker (not a company hiring) — redirect to smitha@beroe-inc.com
+- Company outside procurement research: pure SaaS, e-commerce, fintech, healthcare delivery
+- Under 20 people — no hiring process to plug into
+- Role mismatch: sales, marketing, engineering, ops — not research Analyst profiles
+- Geography mismatch: US/UK/Middle East only, no India or CEE component
+- No real hiring need — benchmarking, curiosity, no role or timeline
 
 ## PROPOSAL STRUCTURE
 
