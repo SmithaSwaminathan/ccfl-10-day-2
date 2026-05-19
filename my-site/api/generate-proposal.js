@@ -262,8 +262,8 @@ async function sendEmail({ to, subject, body, attach_pdf }) {
   if (!apiKey) return { success: false, error: 'RESEND_API_KEY not configured' };
 
   // Resend free tier can only deliver to the account owner's verified email.
-  // Route all emails to smitha@beroe-inc.com; note the intended recipient in the subject.
-  const deliverTo = 'smitha@beroe-inc.com';
+  // Route all emails to Gmail until a custom domain is verified on Resend.
+  const deliverTo = 'ssmithambahr@gmail.com';
   const payload = {
     from: 'Smitha <onboarding@resend.dev>',
     to: deliverTo,
