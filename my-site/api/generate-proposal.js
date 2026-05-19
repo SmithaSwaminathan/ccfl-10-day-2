@@ -1,116 +1,4 @@
-// ============================================================================
-// AGENTIC PROPOSAL ENGINE
-// ============================================================================
-// This serverless function is an AI AGENT — not a script.
-// You give Claude tools and a goal. Claude decides what to do.
-//
-// Flow: Visitor completes intake chat → this function receives the conversation
-//       → Claude writes a proposal, renders a PDF, emails it, and alerts you
-//       → All autonomously, in 2-3 turns
-//
-// Tools: 3 core (render PDF, send email, alert owner)
-//        + 1 optional (store lead in Supabase — enabled when env vars present)
-//
-// Works with: Express (local dev via server.js) and Vercel (production)
-// ============================================================================
-
 const { PDFDocument, rgb, StandardFonts } = require('pdf-lib');
-
-// ── Tool definitions for Claude ─────────────────────────────────────────────
-// These are the "hands" Claude can use. Claude decides WHEN and HOW to use them.
-
-const CORE_TOOLS = [
-  {
-    type: 'function',
-    function: {
-      name: 'render_proposal_pdf',
-      description: 'Renders a branded proposal PDF. Returns base64-encoded PDF data.',
-      parameters: {
-        type: 'object',
-        properties: {
-          company_name: { type: 'string', description: 'The prospect company name' },
-          contact_name: { type: 'string', description: 'The prospect contact name' },
-          sections: {
-            type: 'array',
-            items: {
-              type: 'object',
-              properties: {
-                heading: { type: 'string' },
-                body: { type: 'string' },
-              },
-              required: ['heading', 'body'],
-            },
-            description: 'Proposal sections, each with a heading and body text',
-          },
-        },
-        required: ['company_name', 'contact_name', 'sections'],
-      },
-    },
-  },
-  {
-    type: 'function',
-    function: {
-      name: 'send_email',
-      description: 'Sends an email to the prospect with optional PDF attachment.',
-      parameters: {
-        type: 'object',
-        properties: {
-          to: { type: 'string', description: 'Recipient email address' },
-          subject: { type: 'string', description: 'Email subject line' },
-          body: { type: 'string', description: 'Email body text (plain text)' },
-          attach_pdf: { type: 'boolean', description: 'Whether to attach the proposal PDF' },
-        },
-        required: ['to', 'subject', 'body'],
-      },
-    },
-  },
-  {
-    type: 'function',
-    function: {
-      name: 'alert_owner',
-      description: 'Sends a Telegram alert to the owner with lead summary and proposal PDF.',
-      parameters: {
-        type: 'object',
-        properties: {
-          message: { type: 'string', description: 'Alert message text including lead score (HIGH/MEDIUM/LOW)' },
-        },
-        required: ['message'],
-      },
-    },
-  },
-];
-
-// Optional tool — only available if Supabase is configured (Power Up: Lead Storage)
-const STORE_LEAD_TOOL = {
-  type: 'function',
-  function: {
-    name: 'store_lead',
-    description: 'Stores the lead in the CRM database with score and conversation data.',
-    parameters: {
-      type: 'object',
-      properties: {
-        name: { type: 'string', description: 'Contact name' },
-        company: { type: 'string', description: 'Company name' },
-        email: { type: 'string', description: 'Contact email' },
-        industry: { type: 'string', description: 'Company industry' },
-        challenge: { type: 'string', description: 'Their main challenge (1-2 sentences)' },
-        budget: { type: 'string', description: 'Budget range mentioned' },
-        score: { type: 'string', enum: ['HIGH', 'MEDIUM', 'LOW'], description: 'Lead score based on triage rules' },
-        status: { type: 'string', description: 'Lead status, e.g. proposal_sent' },
-      },
-      required: ['name', 'company', 'email', 'score', 'status'],
-    },
-  },
-};
-
-// Build tools list — Supabase tool is included only when configured
-function getTools() {
-  const tools = [...CORE_TOOLS];
-  if (process.env.SUPABASE_URL && process.env.SUPABASE_KEY) {
-    tools.push(STORE_LEAD_TOOL);
-  }
-  return tools;
-}
 
 // ── PDF text sanitizer ──────────────────────────────────────────────────────
 // pdf-lib standard fonts only support WinAnsi encoding (basic ASCII).
@@ -371,94 +259,38 @@ async function alertOwner({ message }) {
   return { success: true };
 }
 
-// ── Tool dispatcher ─────────────────────────────────────────────────────────
+// ── Proposal generation system prompt ──────────────────────────────────────
 
-async function executeTool(name, args) {
-  switch (name) {
-    case 'render_proposal_pdf': return renderProposalPdf(args);
-    case 'send_email':          return sendEmail(args);
-    case 'store_lead':          return storeLead(args);
-    case 'alert_owner':         return alertOwner(args);
-    default:                    return { error: `Unknown tool: ${name}` };
-  }
-}
+const PROPOSAL_SYSTEM_PROMPT = `You are writing a proposal on behalf of Smitha, a Talent Acquisition specialist with 19+ years of experience at Beroe Inc.
 
-// ── Agent system prompt ─────────────────────────────────────────────────────
+Voice: Warm, direct, no jargon. Short sentences. Never use: "leverage," "synergies," "bandwidth," "circle back," "touch base." Specific beats general.
 
-const AGENT_SYSTEM_PROMPT = `You are an AI agent acting on behalf of Smitha, a Talent Acquisition specialist with 19+ years of experience, currently at Beroe Inc. You have received intake data from a website visitor who wants a proposal for her TA services.
+SERVICES & PRICING:
+- End-to-End Hiring Partnership: 12-15% of first-year CTC per placed hire, or fixed monthly retainer for volume hiring
+- JD Design & Audit: INR 15,000-40,000 per JD batch
+- TA Advisory: INR 50,000-1,50,000 depending on scope
+Domains: Pharma/Life Sciences, Industrials (Capex & MRO, Engineering, IMD), Chemicals & Energy, Services (FM, Professional Services, HR, Marketing), IT & Telecom, Quantitative (Price Forecasting, Financial Risk). India + CEE.
 
-Your job:
-1. Write a personalized proposal in Smitha's voice
-2. Score the lead using the triage rules below
-3. Use your tools to: render the proposal as a PDF, email it to the visitor, store the lead (if store_lead tool is available), and alert Smitha on Telegram
+LEAD SCORE — HIGH if: procurement research/intelligence company, needs Analyst/Senior Analyst in Smitha's domains, 2+ roles or generalist agency already failed, India/CEE, budget INR 6-25L CTC. MEDIUM if 1-2 criteria missing. LOW if: job seeker, non-procurement company, <20 people, role mismatch, geography mismatch.
 
-## SMITHA'S IDENTITY & VOICE
-
-Smitha is a Talent Acquisition professional who spent 15 years at Beroe Inc. building deep expertise in hiring for procurement intelligence and research roles. She started knowing nothing about procurement — which is exactly why she's good at hiring for it. She assesses not just technical skills but cultural fit, domain curiosity, and the research mindset that makes someone succeed. A generic recruiter can't do that.
-
-Voice rules — write the proposal as Smitha:
-- Warm and direct. Short sentences. No filler words.
-- Never use: "talent pipeline," "leverage," "synergies," "bandwidth," "circle back," "touch base."
-- Specific always beats general. Name the domain, the role type, the exact gap.
-- Close doors without closing relationships — even a redirect ends with a next step.
-- Confident, not arrogant. 15 years in this niche. No hedging.
-
-## SMITHA'S SERVICES & PRICING
-
-End-to-End Hiring Partnership: Full recruitment cycle for Analyst / Senior Analyst roles in procurement research — sourcing, briefings, technical coordination, offer close. Fee: 12-15% of first-year CTC per placed hire, or a fixed monthly retainer for ongoing volume hiring.
-
-JD Design & Audit: Structured, domain-calibrated job descriptions for procurement research roles across 15+ specializations. One-time project fee: INR 15,000-40,000 per JD batch (varies by number and domain depth).
-
-TA Advisory: Process review, hiring criteria definition, interview framework design for procurement/research hiring functions. Project-based: INR 50,000-1,50,000 depending on scope.
-
-Domains covered: Pharma & Life Sciences, Industrials (Capex & MRO, Engineering, IMD), Chemicals & Energy, Services (HR, Professional Services, Facilities Management, Marketing), IT & Telecom, Quantitative (Price Forecasting, Financial Risk). Global: India (Chennai, Bangalore, Remote) and CEE (Central & Eastern Europe).
-
-## LEAD TRIAGE RULES
-
-Score HIGH if ALL (or most) of these are true:
-- Company is a procurement intelligence firm, market research company, procurement consultancy, or large enterprise (Fortune 500 / large Indian conglomerate) with an established research function
-- They need Analyst or Senior Analyst roles in Smitha's domains: Pharma/Life Sciences, Industrials (Capex & MRO, Engineering, IMD), Chemicals & Energy, Services (FM, Professional Services, HR, Marketing Agencies), IT & Telecom, or Quantitative (Price Forecasting, Financial Risk)
-- Two or more open roles, OR a single role where a generalist agency already failed
-- Geography: India (Chennai/Bangalore/Remote) or CEE
-- Budget consistent with market rates: INR 6–15L CTC for Analysts, INR 12–25L for Senior Analysts
-- Decision-maker reaching out (Research Manager, TA Head, BU Lead)
-
-Score MEDIUM if one or two HIGH criteria are missing:
-- Building a research function from scratch — genuine need, plan still forming
-- Single role, no urgency, or "next quarter" timeline
-- Adjacent domain: supply chain consulting, FMCG category intelligence, management consulting with procurement practice
-- Generalist TA struggling but company hasn't committed to a specialist yet
-- Budget vague or slightly below range
-- Geography India but role scope or level unclear
-
-Score LOW — send the proposal but do not actively follow up:
-- Individual job seeker (not a company hiring) — redirect to smitha@beroe-inc.com
-- Company outside procurement research: pure SaaS, e-commerce, fintech, healthcare delivery
-- Under 20 people — no hiring process to plug into
-- Role mismatch: sales, marketing, engineering, ops — not research Analyst profiles
-- Geography mismatch: US/UK/Middle East only, no India or CEE component
-- No real hiring need — benchmarking, curiosity, no role or timeline
-
-## PROPOSAL STRUCTURE
-
-Write exactly 5 sections:
-1. What I Heard — restate their situation in your own words. Show you listened.
-2. Where I Can Help — map their specific challenge to the relevant service(s).
-3. How I Work — the process: what they can expect, typical timelines, what you need from them.
-4. Investment — give the relevant pricing range from the services above. Be specific.
-5. Next Step — one clear action for them to take (reply to this email, book a call, send a JD).
-
-## INSTRUCTIONS
-- Write the proposal in Smitha's voice — direct, specific, no jargon.
-- Score the lead (HIGH/MEDIUM/LOW) using the triage rules above.
-- Call render_proposal_pdf with the five proposal sections.
-- Call send_email with a warm 2-3 sentence covering note and the PDF attached. Subject: "Your proposal from Smitha".
-- If the store_lead tool is available, call it with all lead data and the score.
-- Call alert_owner with: company name, contact name, score, the challenge in one sentence, and why you scored it that way.
-- You decide the order. Render the PDF before sending the email (you need the PDF first).`;
+OUTPUT — respond with ONLY valid JSON (no markdown, no extra text):
+{
+  "company_name": "extracted company name",
+  "contact_name": "contact name or 'Hiring Manager'",
+  "lead_score": "HIGH|MEDIUM|LOW",
+  "score_reason": "one sentence why",
+  "email_body": "2-3 sentence warm covering note",
+  "alert_message": "New lead: [Company] | Score: [X] | [Challenge in one sentence] | Contact: [email]",
+  "sections": [
+    {"heading": "What I Heard", "body": "..."},
+    {"heading": "Where I Can Help", "body": "..."},
+    {"heading": "How I Work", "body": "..."},
+    {"heading": "Investment", "body": "..."},
+    {"heading": "Next Step", "body": "..."}
+  ]
+}`;
 
 // ── Main handler ────────────────────────────────────────────────────────────
-// Works as both Express route (local dev) and Vercel serverless function
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -473,114 +305,115 @@ module.exports = async function handler(req, res) {
     return res.status(400).json({ error: 'conversation or intakeData required' });
   }
 
-  // Reset PDF state for this request
   proposalPdfBase64 = null;
 
-  // Build context from intake data or conversation transcript
   const intakeContext = intakeData
     ? `VISITOR INTAKE DATA:\n${JSON.stringify(intakeData, null, 2)}`
     : `CONVERSATION TRANSCRIPT:\n${conversation.map(m => `${m.role}: ${m.content}`).join('\n')}`;
 
-  // Build tools list — store_lead only available if Supabase is configured
-  const tools = getTools();
-  const supabaseEnabled = tools.some(t => t.function?.name === 'store_lead');
-  console.log(`Agent starting with ${tools.length} tools${supabaseEnabled ? ' (Supabase enabled)' : ''}`);
+  // Single LLM call — returns JSON with proposal + score + email text
+  console.log('Calling LLM for proposal...');
+  const llmRes = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+      'HTTP-Referer': req.headers?.host ? `https://${req.headers.host}` : 'http://localhost:3000',
+    },
+    body: JSON.stringify({
+      model: 'openai/gpt-oss-120b:free',
+      max_tokens: 1200,
+      messages: [
+        { role: 'system', content: PROPOSAL_SYSTEM_PROMPT },
+        { role: 'user', content: intakeContext },
+      ],
+    }),
+  });
 
-  let messages = [
-    { role: 'system', content: AGENT_SYSTEM_PROMPT },
-    { role: 'user', content: `${intakeContext}\n\nPlease write a personalized proposal, score this lead, and use your tools to send everything.` },
-  ];
+  let llmData = await llmRes.json();
 
-  const results = { proposal: false, email: false, stored: false, alerted: false };
-
-  const agentFetch = async () => {
-    const r = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+  if (llmData.error?.code === 429) {
+    console.log('Rate limited, retrying in 2s...');
+    await new Promise(r => setTimeout(r, 2000));
+    const retry = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
         'HTTP-Referer': req.headers?.host ? `https://${req.headers.host}` : 'http://localhost:3000',
       },
-      body: JSON.stringify({ model: 'openai/gpt-oss-120b:free', messages, tools, max_tokens: 1000 }),
+      body: JSON.stringify({
+        model: 'openai/gpt-oss-120b:free',
+        max_tokens: 1200,
+        messages: [
+          { role: 'system', content: PROPOSAL_SYSTEM_PROMPT },
+          { role: 'user', content: intakeContext },
+        ],
+      }),
     });
-    let d = await r.json();
-    if (d.error?.code === 429) {
-      console.log('Agent: rate limited, retrying in 2s...');
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      const r2 = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
-          'HTTP-Referer': req.headers?.host ? `https://${req.headers.host}` : 'http://localhost:3000',
-        },
-        body: JSON.stringify({ model: 'openai/gpt-oss-120b:free', messages, tools, max_tokens: 1000 }),
-      });
-      d = await r2.json();
-    }
-    return d;
-  };
-
-  // ── Agent loop — max 4 turns for safety ──
-  for (let turn = 1; turn <= 4; turn++) {
-    console.log(`Agent turn ${turn}...`);
-
-    const data = await agentFetch();
-    if (data.error) {
-      const err = JSON.stringify(data.error);
-      console.error('Agent OpenRouter error:', err);
-      return res.status(200).json({ error: 'Agent API call failed', details: err });
-    }
-
-    const choice = data.choices?.[0];
-    if (!choice) {
-      console.error('Agent: no choice in response');
-      break;
-    }
-
-    const assistantMessage = choice.message;
-    messages.push(assistantMessage);
-
-    // No tool calls = agent is done thinking
-    if (!assistantMessage.tool_calls || assistantMessage.tool_calls.length === 0) {
-      console.log(`Agent turn ${turn}... Agent completed.`);
-      break;
-    }
-
-    // Execute each tool call
-    const toolNames = assistantMessage.tool_calls.map(tc => tc.function.name);
-    console.log(`Agent turn ${turn}... Claude called ${assistantMessage.tool_calls.length} tool(s): ${toolNames.join(', ')}`);
-
-    for (const toolCall of assistantMessage.tool_calls) {
-      let args;
-      try {
-        args = JSON.parse(toolCall.function.arguments);
-      } catch (e) {
-        console.error(`Failed to parse tool args for ${toolCall.function.name}:`, e.message);
-        messages.push({
-          role: 'tool',
-          tool_call_id: toolCall.id,
-          content: JSON.stringify({ error: 'Failed to parse arguments' }),
-        });
-        continue;
-      }
-
-      const result = await executeTool(toolCall.function.name, args);
-
-      // Track what succeeded
-      if (toolCall.function.name === 'render_proposal_pdf' && result.success) results.proposal = true;
-      if (toolCall.function.name === 'send_email' && result.success) results.email = true;
-      if (toolCall.function.name === 'store_lead' && result.success) results.stored = true;
-      if (toolCall.function.name === 'alert_owner' && result.success) results.alerted = true;
-
-      messages.push({
-        role: 'tool',
-        tool_call_id: toolCall.id,
-        content: JSON.stringify(result),
-      });
-    }
+    llmData = await retry.json();
   }
 
-  console.log('Agent pipeline complete:', results);
+  if (llmData.error) {
+    console.error('LLM error:', JSON.stringify(llmData.error));
+    return res.status(200).json({ error: 'LLM call failed', details: JSON.stringify(llmData.error) });
+  }
+
+  let proposal;
+  try {
+    const raw = llmData.choices?.[0]?.message?.content?.trim() || '';
+    // Strip markdown code fences if model wraps the JSON
+    const cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
+    proposal = JSON.parse(cleaned);
+  } catch (e) {
+    console.error('Failed to parse LLM JSON:', e.message);
+    return res.status(200).json({ error: 'Failed to parse proposal from LLM' });
+  }
+
+  console.log(`Lead score: ${proposal.lead_score} — ${proposal.score_reason}`);
+
+  const results = { proposal: false, email: false, alerted: false };
+
+  // 1. Render PDF
+  const pdfResult = await renderProposalPdf({
+    company_name: proposal.company_name,
+    contact_name: proposal.contact_name,
+    sections: proposal.sections,
+  });
+  results.proposal = pdfResult.success;
+  console.log('PDF:', pdfResult.success ? 'ok' : pdfResult.error);
+
+  // 2. Send email
+  const recipientEmail = intakeData?.email
+    || (conversation && conversation.findLast?.(m => m.role === 'user')?.content)
+    || 'unknown';
+  const emailResult = await sendEmail({
+    to: recipientEmail,
+    subject: 'Your proposal from Smitha',
+    body: proposal.email_body,
+    pdf_base64: proposalPdfBase64,
+  });
+  results.email = emailResult.success;
+  console.log('Email:', emailResult.success ? 'ok' : emailResult.error);
+
+  // 3. Telegram alert
+  const alertResult = await alertOwner({ message: proposal.alert_message });
+  results.alerted = alertResult.success;
+  console.log('Telegram:', alertResult.success ? 'ok' : alertResult.error);
+
+  // 4. Store lead (Supabase — optional)
+  if (process.env.SUPABASE_URL && process.env.SUPABASE_KEY) {
+    const storeResult = await storeLead({
+      company: proposal.company_name,
+      email: recipientEmail,
+      challenge: intakeData?.challenge || '',
+      budget: intakeData?.budget || '',
+      score: proposal.lead_score,
+    });
+    results.stored = storeResult.success;
+    console.log('Supabase:', storeResult.success ? 'ok' : storeResult.error);
+  }
+
+  console.log('Pipeline complete:', results);
   return res.json({ success: true, results });
 };
