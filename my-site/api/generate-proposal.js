@@ -509,13 +509,28 @@ module.exports = async function handler(req, res) {
       }),
     });
 
-    if (!response.ok) {
-      const err = await response.text();
+    let data = await response.json();
+    // Retry once on rate limit
+    if (data.error?.code === 429) {
+      console.log(`Agent turn ${turn}: rate limited, retrying in 5s...`);
+      await new Promise(r => setTimeout(r, 5000));
+      const retry = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+          'HTTP-Referer': req.headers?.host ? `https://${req.headers.host}` : 'http://localhost:3000',
+        },
+        body: JSON.stringify({ model: 'openai/gpt-oss-120b:free', messages, tools, max_tokens: 4096 }),
+      });
+      data = await retry.json();
+    }
+    if (!response.ok || data.error) {
+      const err = JSON.stringify(data.error || data);
       console.error('Agent OpenRouter error:', err);
       return res.status(502).json({ error: 'Agent API call failed', details: err });
     }
 
-    const data = await response.json();
     const choice = data.choices?.[0];
     if (!choice) {
       console.error('Agent: no choice in response');

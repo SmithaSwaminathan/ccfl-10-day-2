@@ -116,7 +116,26 @@ module.exports = async (req, res) => {
       }),
     });
 
-    const data = await response.json();
+    let data = await response.json();
+    // Retry once on rate limit
+    if (data.error?.code === 429) {
+      await new Promise(r => setTimeout(r, 4000));
+      const retry = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+          'HTTP-Referer': 'https://my-site-pink-mu.vercel.app',
+          'X-Title': "Smitha's TA Portfolio",
+        },
+        body: JSON.stringify({
+          model: 'openai/gpt-oss-120b:free',
+          max_tokens: 400,
+          messages: [{ role: 'system', content: systemPrompt }, ...apiMessages],
+        }),
+      });
+      data = await retry.json();
+    }
     if (data.error) {
       console.error('[chat] OpenRouter error:', JSON.stringify(data.error));
       return res.json({ reply: 'Something went wrong on my end. Please reach out to smitha@beroe-inc.com directly.' });
