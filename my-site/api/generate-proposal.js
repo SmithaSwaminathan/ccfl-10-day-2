@@ -261,11 +261,14 @@ async function sendEmail({ to, subject, body, attach_pdf }) {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) return { success: false, error: 'RESEND_API_KEY not configured' };
 
+  // Resend free tier can only deliver to the account owner's verified email.
+  // Route all emails to smitha@beroe-inc.com; note the intended recipient in the subject.
+  const deliverTo = 'smitha@beroe-inc.com';
   const payload = {
     from: 'Smitha <onboarding@resend.dev>',
-    to,
-    subject,
-    text: body,
+    to: deliverTo,
+    subject: to !== deliverTo ? `[For ${to}] ${subject}` : subject,
+    text: to !== deliverTo ? `--- Intended for: ${to} ---\n\n${body}` : body,
   };
 
   if (attach_pdf && proposalPdfBase64) {
@@ -490,45 +493,43 @@ module.exports = async function handler(req, res) {
 
   const results = { proposal: false, email: false, stored: false, alerted: false };
 
-  // ── Agent loop — max 5 turns for safety ──
-  for (let turn = 1; turn <= 5; turn++) {
-    console.log(`Agent turn ${turn}...`);
-
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+  const agentFetch = async () => {
+    const r = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
         'HTTP-Referer': req.headers?.host ? `https://${req.headers.host}` : 'http://localhost:3000',
       },
-      body: JSON.stringify({
-        model: 'openai/gpt-oss-120b:free',
-        messages,
-        tools,
-        max_tokens: 4096,
-      }),
+      body: JSON.stringify({ model: 'openai/gpt-oss-120b:free', messages, tools, max_tokens: 1000 }),
     });
-
-    let data = await response.json();
-    // Retry once on rate limit
-    if (data.error?.code === 429) {
-      console.log(`Agent turn ${turn}: rate limited, retrying in 5s...`);
-      await new Promise(r => setTimeout(r, 5000));
-      const retry = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    let d = await r.json();
+    if (d.error?.code === 429) {
+      console.log('Agent: rate limited, retrying in 2s...');
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      const r2 = await fetch('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
           'HTTP-Referer': req.headers?.host ? `https://${req.headers.host}` : 'http://localhost:3000',
         },
-        body: JSON.stringify({ model: 'openai/gpt-oss-120b:free', messages, tools, max_tokens: 4096 }),
+        body: JSON.stringify({ model: 'openai/gpt-oss-120b:free', messages, tools, max_tokens: 1000 }),
       });
-      data = await retry.json();
+      d = await r2.json();
     }
-    if (!response.ok || data.error) {
-      const err = JSON.stringify(data.error || data);
+    return d;
+  };
+
+  // ── Agent loop — max 4 turns for safety ──
+  for (let turn = 1; turn <= 4; turn++) {
+    console.log(`Agent turn ${turn}...`);
+
+    const data = await agentFetch();
+    if (data.error) {
+      const err = JSON.stringify(data.error);
       console.error('Agent OpenRouter error:', err);
-      return res.status(502).json({ error: 'Agent API call failed', details: err });
+      return res.status(200).json({ error: 'Agent API call failed', details: err });
     }
 
     const choice = data.choices?.[0];
